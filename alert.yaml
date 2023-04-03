@@ -4,8 +4,10 @@ global:
 
 route:
   receiver: "telegram"
-  matchers:
-    repeat_interval: 1h
+  routes:
+    - matchers:
+      - severity="critical"
+      repeat_interval: 1h
 
 receivers:
   - name: "telegram"

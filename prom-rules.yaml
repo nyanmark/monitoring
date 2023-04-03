@@ -5,7 +5,7 @@ groups:
         expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
         for: 2m
         labels:
-          severity: warning
+          severity: critical
         annotations:
           title: Host out of memory (instance {{ $labels.instance }})
           description: "Node memory is filling up (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -53,7 +53,7 @@ groups:
         expr: (node_filesystem_avail_bytes * 100) / node_filesystem_size_bytes < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
         for: 2m
         labels:
-          severity: warning
+          severity: critical
         annotations:
           title: Host out of disk space (instance {{ $labels.instance }})
           description: "Disk is almost full (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
@@ -69,7 +69,7 @@ groups:
         expr: node_filesystem_files_free / node_filesystem_files * 100 < 10 and ON (instance, device, mountpoint) node_filesystem_readonly == 0
         for: 2m
         labels:
-          severity: warning
+          severity: critical
         annotations:
           title: Host out of inodes (instance {{ $labels.instance }})
           description: "Disk is almost running out of available inodes (< 10% left)\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"

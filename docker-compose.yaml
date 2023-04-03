@@ -195,10 +195,9 @@ services:
     volumes:
       - ./alert.yaml:/etc/alertmanager/config.yml:ro
       - alertmanager:/alertmanager
-    restart: always
     command:
-      - '-config.file=/etc/alertmanager/config.yml'
-      - '-storage.path=/alertmanager'
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
     networks:
       - monitoring
     logging:
