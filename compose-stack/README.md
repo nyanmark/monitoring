@@ -1,6 +1,5 @@
 ## Monitoring Docker Compose
 ### Version 1.2
-### Created by Nyanmark
 
 ## Change Log
 ### Version 1.0 - Created Compose File

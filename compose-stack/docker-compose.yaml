@@ -20,13 +20,12 @@ services:
     image: grafana/promtail:2.7.5
     container_name: promtail
     restart: always
-    command: -config.expand-env=true
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
     environment:
       HOST_SERVER_NAME: ${HOST_SERVER_NAME}
     volumes:
       - /var/log:/var/log:ro
       - ./tail.yaml:/etc/promtail/config.yml
-    command: -config.file=/etc/promtail/config.yml
     networks:
       - monitoring
     depends_on:
@@ -70,6 +69,7 @@ services:
     container_name: cassandra
     restart: always
     environment:
+      CASSANDRA_PASSWORD_SEEDER: "yes"
       CASSANDRA_USER: *cass-user
       CASSANDRA_PASSWORD: *cass-pass
     volumes:
@@ -89,27 +89,27 @@ services:
       - |
         cat <<EOF > /consul/config/server.json
         {
-            "node_name": "consul",
-            "server": true,
-            "ui_config": {
-                "enabled" : true
-            },
-            "data_dir": "/consul/data",
-            "addresses": {
-                "http" : "0.0.0.0"
-            },
-            "acl": { 
-                "enabled": true,
-                "default_policy": "deny",
-                "enable_token_persistence": true,
-                "tokens": {
-                    "initial_management": "$CONSUL_API_KEY",
-                    "agent": "$CONSUL_API_KEY"
-                }
-            },
+          "node_name": "consul",
+          "server": true,
+          "ui_config": {
+              "enabled" : true
+          },
+          "data_dir": "/consul/data",
+          "addresses": {
+              "http" : "0.0.0.0"
+          },
+          "acl": { 
+              "enabled": true,
+              "default_policy": "deny",
+              "enable_token_persistence": true,
+              "tokens": {
+                  "initial_management": "$CONSUL_API_KEY",
+                  "agent": "$CONSUL_API_KEY"
+              }
+          }
         }
         EOF
-        /docker-entrypoint.sh agent -dev -client 0.0.0.0 -config-file=/consul/config/server.json
+        /usr/local/bin/docker-entrypoint.sh agent -dev -client 0.0.0.0 -config-file=/consul/config/server.json
     volumes:
       - consul:/consul/data
     networks:
