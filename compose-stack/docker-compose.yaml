@@ -1,0 +1,189 @@
+version: "3.8"
+
+x-common:
+  database:
+    &db-environment
+    POSTGRES_USER: &db-user "grafana"
+    POSTGRES_PASSWORD: &db-password "changeme"
+  grafana:
+    &grafana-environment
+    GF_SECURITY_ADMIN_USER: "manager"
+    GF_SECURITY_ADMIN_PASSWORD: "changeme"
+
+services:
+
+  promtail:
+    image: grafana/promtail:2.7.5
+    container_name: promtail
+    restart: always
+    volumes:
+      - /var/log:/var/log:ro
+      - ./tail.yaml:/etc/promtail/config.yml
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki:2.7.5
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml -target=all,table-manager
+    volumes:
+      - ./loki.yaml:/etc/loki/local-config.yaml:ro
+    networks:
+      - monitoring
+    depends_on:
+      - minio
+      - cassandra
+      - consul
+      - redis
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    restart: always
+    entrypoint: sh
+    command: -c 'mkdir -p /export/loki && /opt/bin/minio server /export'
+    environment:
+      - MINIO_ACCESS_KEY=jktmsw5ifn3pn2bke4ro
+      - MINIO_SECRET_KEY=66oak4r9rjyhuvygf2qkfxakdtob49
+    volumes:
+      - minio:/export
+    networks:
+      - monitoring
+
+  cassandra:
+    image: bitnami/cassandra:latest
+    container_name: cassandra
+    restart: always
+    volumes:
+      - cassandra:/bitnami
+    networks:
+      - monitoring
+
+  consul:
+    image: bitnami/consul:latest
+    container_name: consul
+    restart: always
+    volumes:
+      - consul:/bitnami
+    networks:
+      - monitoring
+
+  redis:
+    image: bitnami/redis:latest
+    container_name: redis
+    restart: always
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - monitoring
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: always
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    networks:
+      - monitoring
+    depends_on:
+      - prometheus
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: always
+    volumes:
+      - ./prom.yaml:/etc/prometheus/prometheus.yml:ro
+      - prometheus:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - monitoring
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    restart: always
+    environment:
+      <<: *db-environment
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - database:/var/lib/postgresql/data
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *grafana-environment
+      GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
+      GF_DATABASE_TYPE: "postgres"
+      GF_DATABASE_HOST: "postgres"
+      GF_DATABASE_NAME: *db-user
+      GF_DATABASE_USER: *db-user
+      GF_DATABASE_PASSWORD: *db-password
+      GF_DATABASE_SSL_MODE: "disable"
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        mkdir -p /etc/grafana/provisioning/datasources
+        cat <<EOF > /etc/grafana/provisioning/datasources/ds.yaml
+        apiVersion: 1
+        datasources:
+        - name: Loki
+          type: loki
+          access: proxy
+          orgId: 1
+          url: http://loki:3100
+          basicAuth: false
+          isDefault: true
+          version: 1
+          editable: false
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          orgId: 1
+          url: http://prometheus:9090
+          basicAuth: false
+          isDefault: false
+          version: 1
+          editable: false
+        EOF
+        /run.sh
+    networks:
+      - monitoring
+    depends_on:
+      - postgres
+
+networks:
+  monitoring:
+
+volumes:
+  database:
+  prometheus:
+  minio:
+  cassandra:
+  consul:
+

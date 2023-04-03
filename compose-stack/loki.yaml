@@ -1,0 +1,74 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+distributor:
+  ring:
+    kvstore:
+      store: consul
+      consul:
+        host: consul.:8500
+
+ingester:
+  wal:
+    enabled: false
+  lifecycler:
+    address: localhost
+    ring:
+      kvstore:
+        store: consul
+        consul:
+          host: consul.:8500
+      replication_factor: 1
+    final_sleep: 0s
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+
+querier:
+  tail_max_duration: 1h
+
+schema_config:
+  configs:
+  - from: 2021-10-24
+    store: cassandra
+    object_store: aws
+    schema: v11
+    index:
+      prefix: loki_index_
+      period: 168h
+
+query_range:
+  results_cache:
+    cache:
+      redis:
+        endpoint: redis.:6379
+        expiration: 8h
+  cache_results: true
+
+storage_config:
+  cassandra:
+    username: cassandra
+    password: cassandra
+    addresses: cassandra.
+    auth: true
+    keyspace: loki
+    replication_factor: 1
+
+  aws:
+    s3: s3://jktmsw5ifn3pn2bke4ro:66oak4r9rjyhuvygf2qkfxakdtob49@minio.:9000/loki
+    s3forcepathstyle: true
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 336h
+
+limits_config:
+  query_timeout: 1m
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  split_queries_by_interval: 24h
+
+analytics:
+  reporting_enabled: false
