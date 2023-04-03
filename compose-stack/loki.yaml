@@ -9,6 +9,7 @@ distributor:
       store: consul
       consul:
         host: consul.:8500
+        acl_token: ${CONSUL_API_KEY}
 
 ingester:
   wal:
@@ -20,6 +21,7 @@ ingester:
         store: consul
         consul:
           host: consul.:8500
+          acl_token: ${CONSUL_API_KEY}
       replication_factor: 1
     final_sleep: 0s
   chunk_idle_period: 5m
@@ -44,19 +46,20 @@ query_range:
       redis:
         endpoint: redis.:6379
         expiration: 8h
+        password: ${REDIS_PASSWORD}
   cache_results: true
 
 storage_config:
   cassandra:
-    username: cassandra
-    password: cassandra
+    username: ${CASSANDRA_USER}
+    password: ${CASSANDRA_PASSWORD}
     addresses: cassandra.
     auth: true
     keyspace: loki
     replication_factor: 1
 
   aws:
-    s3: s3://jktmsw5ifn3pn2bke4ro:66oak4r9rjyhuvygf2qkfxakdtob49@minio.:9000/loki
+    s3: s3://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@minio.:9000/loki
     s3forcepathstyle: true
 
 table_manager:

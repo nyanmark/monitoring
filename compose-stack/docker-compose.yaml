@@ -3,19 +3,26 @@ version: "3.8"
 x-common:
   database:
     &db-environment
-    POSTGRES_USER: &db-user "grafana"
-    POSTGRES_PASSWORD: &db-password "changeme"
-  grafana:
-    &grafana-environment
-    GF_SECURITY_ADMIN_USER: "manager"
-    GF_SECURITY_ADMIN_PASSWORD: "changeme"
+    POSTGRES_USER: &db-user ${POSTGRES_USER}
+    POSTGRES_PASSWORD: &db-pass ${POSTGRES_PASSWORD}
+    PGDATA: "/var/lib/postgresql/data/pgdata"
+  loki:
+    &loki-environment
+    MINIO_ACCESS_KEY: &minio-ak ${MINIO_ACCESS_KEY}
+    MINIO_SECRET_KEY: &minio-sk ${MINIO_SECRET_KEY}
+    CASSANDRA_USER: &cass-user ${CASSANDRA_USER}
+    CASSANDRA_PASSWORD: &cass-pass ${CASSANDRA_PASSWORD}
+    CONSUL_API_KEY: &consul-key ${CONSUL_API_KEY}
+    REDIS_PASSWORD: &redis-pass ${REDIS_PASSWORD}
 
 services:
-
   promtail:
     image: grafana/promtail:2.7.5
     container_name: promtail
     restart: always
+    command: -config.expand-env=true
+    environment:
+      HOST_SERVER_NAME: ${HOST_SERVER_NAME}
     volumes:
       - /var/log:/var/log:ro
       - ./tail.yaml:/etc/promtail/config.yml
@@ -31,7 +38,9 @@ services:
     restart: always
     ports:
       - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml -target=all,table-manager
+    command: -config.file=/etc/loki/local-config.yaml -target=all,table-manager -config.expand-env=true
+    environment:
+      <<: *loki-environment
     volumes:
       - ./loki.yaml:/etc/loki/local-config.yaml:ro
     networks:
@@ -49,8 +58,8 @@ services:
     entrypoint: sh
     command: -c 'mkdir -p /export/loki && /opt/bin/minio server /export'
     environment:
-      - MINIO_ACCESS_KEY=jktmsw5ifn3pn2bke4ro
-      - MINIO_SECRET_KEY=66oak4r9rjyhuvygf2qkfxakdtob49
+      MINIO_ACCESS_KEY: *minio-ak
+      MINIO_SECRET_KEY: *minio-sk
     volumes:
       - minio:/export
     networks:
@@ -60,17 +69,49 @@ services:
     image: bitnami/cassandra:latest
     container_name: cassandra
     restart: always
+    environment:
+      CASSANDRA_USER: *cass-user
+      CASSANDRA_PASSWORD: *cass-pass
     volumes:
       - cassandra:/bitnami
     networks:
       - monitoring
 
   consul:
-    image: bitnami/consul:latest
+    image: hashicorp/consul:latest
     container_name: consul
     restart: always
+    environment:
+      CONSUL_API_KEY: *consul-key
+    entrypoint:
+      - sh
+      - -euc
+      - |
+        cat <<EOF > /consul/config/server.json
+        {
+            "node_name": "consul",
+            "server": true,
+            "ui_config": {
+                "enabled" : true
+            },
+            "data_dir": "/consul/data",
+            "addresses": {
+                "http" : "0.0.0.0"
+            },
+            "acl": { 
+                "enabled": true,
+                "default_policy": "deny",
+                "enable_token_persistence": true,
+                "tokens": {
+                    "initial_management": "$CONSUL_API_KEY",
+                    "agent": "$CONSUL_API_KEY"
+                }
+            },
+        }
+        EOF
+        /docker-entrypoint.sh agent -dev -client 0.0.0.0 -config-file=/consul/config/server.json
     volumes:
-      - consul:/bitnami
+      - consul:/consul/data
     networks:
       - monitoring
 
@@ -79,7 +120,7 @@ services:
     container_name: redis
     restart: always
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+      REDIS_PASSWORD: *redis-pass
     networks:
       - monitoring
 
@@ -123,7 +164,6 @@ services:
     restart: always
     environment:
       <<: *db-environment
-      PGDATA: "/var/lib/postgresql/data/pgdata"
     volumes:
       - database:/var/lib/postgresql/data
     networks:
@@ -136,14 +176,15 @@ services:
     ports:
       - "3000:3000"
     environment:
-      <<: *grafana-environment
       GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
       GF_DATABASE_TYPE: "postgres"
       GF_DATABASE_HOST: "postgres"
       GF_DATABASE_NAME: *db-user
       GF_DATABASE_USER: *db-user
-      GF_DATABASE_PASSWORD: *db-password
+      GF_DATABASE_PASSWORD: *db-pass
       GF_DATABASE_SSL_MODE: "disable"
+      GF_SECURITY_ADMIN_USER: ${GF_SECURITY_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_SECURITY_ADMIN_PASSWORD}
     entrypoint:
       - sh
       - -euc
