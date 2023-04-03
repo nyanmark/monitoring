@@ -1,0 +1,14 @@
+global:
+  telegram_api_url: "https://api.telegram.org"
+  resolve_timeout: 5m
+
+route:
+  receiver: "telegram"
+  matchers:
+    repeat_interval: 1h
+
+receivers:
+  - name: "telegram"
+    telegram_configs:
+    - bot_token: "YOUR_TOKEN"
+      chat_id: CHAT_ID

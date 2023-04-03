@@ -1,0 +1,91 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+
+distributor:
+  ring:
+    kvstore:
+      store: consul
+      consul:
+        host: consul.:8500
+        acl_token: ${CONSUL_API_KEY}
+
+ingester:
+  wal:
+    enabled: false
+  lifecycler:
+    address: localhost
+    ring:
+      kvstore:
+        store: consul
+        consul:
+          host: consul.:8500
+          acl_token: ${CONSUL_API_KEY}
+      replication_factor: 1
+    final_sleep: 0s
+  chunk_idle_period: 5m
+  chunk_retain_period: 30s
+
+querier:
+  tail_max_duration: 1h
+
+schema_config:
+  configs:
+  - from: 2021-10-24
+    store: cassandra
+    object_store: aws
+    schema: v11
+    index:
+      prefix: loki_index_
+      period: 168h
+
+query_range:
+  results_cache:
+    cache:
+      redis:
+        endpoint: redis.:6379
+        expiration: 8h
+        password: ${REDIS_PASSWORD}
+  cache_results: true
+
+storage_config:
+  cassandra:
+    username: ${CASSANDRA_USER}
+    password: ${CASSANDRA_PASSWORD}
+    addresses: cassandra.
+    auth: true
+    keyspace: loki
+    replication_factor: 1
+
+  aws:
+    s3: s3://${MINIO_ACCESS_KEY}:${MINIO_SECRET_KEY}@minio.:9000/loki
+    s3forcepathstyle: true
+
+table_manager:
+  retention_deletes_enabled: true
+  retention_period: 336h
+
+limits_config:
+  query_timeout: 1m
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+  split_queries_by_interval: 24h
+
+ruler:
+  storage:
+    type: local
+    local:
+      directory: /etc/loki/rules
+  rule_path: /tmp/loki/rules
+  alertmanager_url: http://alertmanager.:9093
+  ring:
+    kvstore:
+      store: consul
+      consul:
+        host: consul.:8500
+        acl_token: ${CONSUL_API_KEY}
+
+analytics:
+  reporting_enabled: false
