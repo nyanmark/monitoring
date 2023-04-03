@@ -264,8 +264,26 @@ services:
           version: 1
           editable: false
         EOF
+        mkdir -p /etc/grafana/provisioning/dashboards
+        cat <<EOF > /etc/grafana/provisioning/dashboards/db.yaml
+        apiVersion: 1
+        providers:
+          - name: 'Nyanmark'
+            orgId: 1
+            folder: 'General'
+            folderUid: ''
+            type: file
+            disableDeletion: false
+            updateIntervalSeconds: 10
+            allowUiUpdates: true
+            options:
+              path: /var/lib/dashboards
+              foldersFromFilesStructure: true
+        EOF
         grafana-cli plugins install grafana-piechart-panel
         /run.sh
+    volumes:
+      - ./dashboards:/var/lib/dashboards
     networks:
       - monitoring
     depends_on:
