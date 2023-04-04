@@ -14,5 +14,5 @@ receivers:
     telegram_configs:
     - bot_token: "YOUR_TOKEN"
       chat_id: CHAT_ID
-      message:  "Alertname: {{ .GroupLabels.alertname }}\n Severity: {{ .CommonLabels.severity }}\n {{ range .Alerts }}{{ .Annotations.title }}\n{{ .Annotations.description }}\n{{ end }}"
+      message:  " Title: {{ .Annotations.title }}\n Severity: {{ .CommonLabels.severity }}\n Description: {{ .Annotations.description }}"
       parse_mode: ''
