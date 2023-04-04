@@ -12,7 +12,7 @@ route:
 receivers:
   - name: "telegram"
     telegram_configs:
-    - bot_token: "YOUR_TOKEN"
-      chat_id: CHAT_ID
-      message:  " Title: {{ .Annotations.title }}\n Severity: {{ .CommonLabels.severity }}\n Description: {{ .Annotations.description }}"
+    - bot_token: "TOKEN"
+      chat_id: NUM
+      message:  "{{ range .Alerts }} Title: {{ .Annotations.title }}\n Severity: {{ .CommonLabels.severity }}\n Description: {{ .Annotations.description }}\n{{ end }}"
       parse_mode: ''
