@@ -14,6 +14,7 @@ x-common:
     CASSANDRA_PASSWORD: &cass-pass ${CASSANDRA_PASSWORD}
     CONSUL_API_KEY: &consul-key ${CONSUL_API_KEY}
     REDIS_PASSWORD: &redis-pass ${REDIS_PASSWORD}
+    TZ: &time-zone ${CONTAINER_TZ}
 
 services:
   promtail:
@@ -22,9 +23,9 @@ services:
     restart: always
     command: -config.file=/etc/promtail/config.yml -config.expand-env=true
     environment:
+      TZ: *time-zone
       HOST_SERVER_NAME: ${HOST_SERVER_NAME}
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /var/log:/var/log:ro
       - ./tail.yaml:/etc/promtail/config.yml
     networks:
@@ -46,7 +47,6 @@ services:
     environment:
       <<: *loki-environment
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - ./loki.yaml:/etc/loki/local-config.yaml:ro
       - ./loki-rules.yml:/etc/loki/rules/alerts/rules.yml:ro
     networks:
@@ -64,10 +64,10 @@ services:
     entrypoint: sh
     command: -c 'mkdir -p /export/loki && /opt/bin/minio server /export'
     environment:
+      TZ: *time-zone
       MINIO_ACCESS_KEY: *minio-ak
       MINIO_SECRET_KEY: *minio-sk
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - minio:/export
     networks:
       - monitoring
@@ -81,11 +81,11 @@ services:
     container_name: cassandra
     restart: always
     environment:
+      TZ: *time-zone
       CASSANDRA_PASSWORD_SEEDER: "yes"
       CASSANDRA_USER: *cass-user
       CASSANDRA_PASSWORD: *cass-pass
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - cassandra:/bitnami
     networks:
       - monitoring
@@ -99,6 +99,7 @@ services:
     container_name: consul
     restart: always
     environment:
+      TZ: *time-zone
       CONSUL_API_KEY: *consul-key
     entrypoint:
       - sh
@@ -128,7 +129,6 @@ services:
         EOF
         /usr/local/bin/docker-entrypoint.sh agent -dev -client 0.0.0.0 -config-file=/consul/config/server.json
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - consul:/consul/data
     networks:
       - monitoring
@@ -142,9 +142,8 @@ services:
     container_name: redis
     restart: always
     environment:
+      TZ: *time-zone
       REDIS_PASSWORD: *redis-pass
-    volumes:
-      - /etc/timezone:/etc/timezone:ro
     networks:
       - monitoring
     logging:
@@ -156,8 +155,9 @@ services:
     image: prom/prometheus:latest
     container_name: prometheus
     restart: always
+    environment:
+      TZ: *time-zone
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - ./prom.yaml:/etc/prometheus/prometheus.yml:ro
       - ./prom-rules.yaml:/etc/prometheus/rules.yml:ro
       - prometheus:/prometheus
@@ -178,8 +178,9 @@ services:
     image: prom/node-exporter:latest
     container_name: node-exporter
     restart: always
+    environment:
+      TZ: *time-zone
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
       - /:/rootfs:ro
@@ -198,11 +199,12 @@ services:
         loki-url: "http://127.0.0.1:3100/loki/api/v1/push"
 
   cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
+    image: gcr.io/cadvisor/cadvisor:v0.47.1
     container_name: cadvisor
     restart: always
+    environment:
+      TZ: *time-zone
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /sys:/sys:ro
@@ -219,8 +221,9 @@ services:
     image: prom/alertmanager:latest
     container_name: alertmanager
     restart: always
+    environment:
+      TZ: *time-zone
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - ./alert.yaml:/etc/alertmanager/config.yml:ro
       - alertmanager:/alertmanager
     command:
@@ -238,9 +241,9 @@ services:
     container_name: postgres
     restart: always
     environment:
+      TZ: *time-zone
       <<: *db-environment
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - postgres:/var/lib/postgresql/data
     networks:
       - monitoring
@@ -256,6 +259,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      TZ: *time-zone
       GF_PATHS_PROVISIONING: "/etc/grafana/provisioning"
       GF_DATABASE_TYPE: "postgres"
       GF_DATABASE_HOST: "postgres"
@@ -311,7 +315,6 @@ services:
         grafana-cli plugins install grafana-piechart-panel
         /run.sh
     volumes:
-      - /etc/timezone:/etc/timezone:ro
       - ./dashboards:/var/lib/dashboards
     networks:
       - monitoring
