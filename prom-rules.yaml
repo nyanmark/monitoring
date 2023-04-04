@@ -1,5 +1,5 @@
 groups:
-  - name: node-exporter-alerts
+  - name: Node Exporter
     rules:
       - alert: HostOutOfMemory
         expr: node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes * 100 < 10
@@ -265,8 +265,7 @@ groups:
         annotations:
           title: Host requires reboot (instance {{ $labels.instance }})
           description: "{{ $labels.instance }} requires a reboot.\n  VALUE = {{ $value }}\n  LABELS = {{ $labels }}"
-  - name: cadvisor-alerts
-    # Work in progress implementing cadvisor to the stack.
+  - name: Cadvisor
     rules:
       - alert: ContainerCpuUsage
         expr: (sum(rate(container_cpu_usage_seconds_total{name!=""}[3m])) BY (instance, name) * 100) > 80

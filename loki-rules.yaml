@@ -1,5 +1,5 @@
 groups:
-  - name: error-log-rate
+  - name: Loki
     rules:
       - alert: ErrorLogAlertContainer
         expr: |
@@ -21,8 +21,6 @@ groups:
         labels:
           severity: warning
           category: logs
-  - name: high-log-rate
-    rules:
       - alert: HighLogRateContainer
         expr: |
           sum(rate({host=~".+", container_name=~".+"} [1m])) by (container_name) > 120
