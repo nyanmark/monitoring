@@ -56,6 +56,10 @@ services:
       - cassandra
       - consul
       - redis
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://127.0.0.1:3100/loki/api/v1/push"
 
   minio:
     image: minio/minio:latest
