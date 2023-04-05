@@ -48,7 +48,7 @@ services:
       <<: *loki-environment
     volumes:
       - ./loki.yaml:/etc/loki/local-config.yaml:ro
-      - ./loki-rules.yml:/etc/loki/rules/alerts/rules.yml:ro
+      - ./loki-rules.yml:/etc/loki/rules/fake/rules.yml:ro
     networks:
       - monitoring
     depends_on:
@@ -124,7 +124,8 @@ services:
                   "initial_management": "$CONSUL_API_KEY",
                   "agent": "$CONSUL_API_KEY"
               }
-          }
+          },
+          "log_level": "info"
         }
         EOF
         /usr/local/bin/docker-entrypoint.sh agent -dev -client 0.0.0.0 -config-file=/consul/config/server.json

@@ -86,6 +86,8 @@ ruler:
       consul:
         host: consul.:8500
         acl_token: ${CONSUL_API_KEY}
+  enable_api: true
+  enable_alertmanager_v2: true
 
 analytics:
   reporting_enabled: false
