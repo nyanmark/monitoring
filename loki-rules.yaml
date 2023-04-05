@@ -10,7 +10,6 @@ groups:
           description: "Over 1% of log messages with the content 'error' or 'exception' have been found in the last 1 minute."
         labels:
           severity: warning
-          category: logs
       - alert: ErrorLogAlertJob
         expr: |
           sum(rate({host=~".+", job=~".+"} |~ "(?i)(error|panic|exception)" [1m])) by (job) / sum(rate({host=~".+", job=~".+"}[1m])) by (job) > 0.01
@@ -20,14 +19,12 @@ groups:
           description: "Over 1% of log messages with the content 'error' or 'exception' have been found in the last 1 minute."
         labels:
           severity: warning
-          category: logs
       - alert: HighLogRateContainer
         expr: |
           sum(rate({host=~".+", container_name=~".+"} [1m])) by (container_name) > 120
         for: 1m
         labels:
           severity: warning
-          category: logs
         annotations:
           title: "High Log Rate {{ $labels.container_name }}"
           description: "Over 120 logs recorded in the last 1 minute."
@@ -37,7 +34,6 @@ groups:
         for: 1m
         labels:
           severity: warning
-          category: logs
         annotations:
           title: "High Log Rate {{ $labels.container_name }}"
           description: "Over 120 logs recorded in the last 1 minute."

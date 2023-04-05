@@ -14,5 +14,5 @@ receivers:
     telegram_configs:
     - bot_token: "TOKEN"
       chat_id: NUM
-      message:  "{{ range .Alerts }} Title: {{ .Annotations.title }}\n Severity: {{ .CommonLabels.severity }}\n Description: {{ .Annotations.description }}\n{{ end }}"
+      message:  "{{ range .Alerts }}Title: {{ .Annotations.title }}\nSeverity: {{ .Labels.severity }}\nDescription: {{ .Annotations.description }}\n{{ end }}"
       parse_mode: ''
