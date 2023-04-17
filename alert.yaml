@@ -13,6 +13,6 @@ receivers:
   - name: "telegram"
     telegram_configs:
     - bot_token: "TOKEN"
-      chat_id: NUM
-      message:  "{{ range .Alerts }}Title: {{ .Annotations.title }}\nSeverity: {{ .Labels.severity }}\nDescription: {{ .Annotations.description }}\n{{ end }}"
-      parse_mode: ''
+      send_resolved: true
+      chat_id: NUMBER
+      message:  "{{ range .Alerts }}Status: {{.Status | toUpper}}\nTitle: {{ .Annotations.title }}\nSeverity: {{ .Labels.severity }}\nDescription: {{ .Annotations.description }}\n{{ end }}"
