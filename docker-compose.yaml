@@ -90,6 +90,8 @@ services:
       CASSANDRA_PASSWORD_SEEDER: "yes"
       CASSANDRA_USER: *cass-user
       CASSANDRA_PASSWORD: *cass-pass
+      HEAP_NEWSIZE: ${NEW_HEAP_SIZE}
+      MAX_HEAP_SIZE: ${MAX_HEAP_SIZE}
     volumes:
       - cassandra:/bitnami
     networks:
