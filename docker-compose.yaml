@@ -8,8 +8,9 @@ x-common:
     PGDATA: "/var/lib/postgresql/data/pgdata"
   loki:
     &loki-environment
-    MINIO_ACCESS_KEY: &minio-ak ${MINIO_ACCESS_KEY}
-    MINIO_SECRET_KEY: &minio-sk ${MINIO_SECRET_KEY}
+    S3_ENDPOINT: ${S3_ENDPOINT}
+    S3_ACCESS_KEY: &s3-ak ${S3_ACCESS_KEY}
+    S3_SECRET_KEY: &s3-sk ${S3_SECRET_KEY}
     CASSANDRA_USER: &cass-user ${CASSANDRA_USER}
     CASSANDRA_PASSWORD: &cass-pass ${CASSANDRA_PASSWORD}
     CONSUL_API_KEY: &consul-key ${CONSUL_API_KEY}
@@ -70,8 +71,8 @@ services:
     command: -c 'mkdir -p /export/loki && /opt/bin/minio server /export'
     environment:
       TZ: *time-zone
-      MINIO_ACCESS_KEY: *minio-ak
-      MINIO_SECRET_KEY: *minio-sk
+      MINIO_ACCESS_KEY: *s3-ak
+      MINIO_SECRET_KEY: *s3-sk
     volumes:
       - minio:/export
     networks:
